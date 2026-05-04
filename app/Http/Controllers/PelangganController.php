@@ -12,6 +12,7 @@ use App\Models\Pemeriksaan;
 use App\Models\DetailTransaksi;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\DB;
+use App\Models\Wishlist;
 
 class PelangganController extends Controller
 {
@@ -54,6 +55,12 @@ class PelangganController extends Controller
         }
 
         return view('pelanggan.produk', compact('produk', 'wishlistIds'));
+    }
+
+    public function wishlist() {
+        // Sesuaikan logika pengambilan data wishlist sesuai kebutuhan Anda
+        $wishlists = Wishlist::where('user_id', auth()->id())->get();
+        return view('pelanggan.wishlist', compact('wishlists'));
     }
 
     // 3. Fitur Keranjang Belanja
@@ -190,13 +197,16 @@ class PelangganController extends Controller
     public function tambahWishlist($id)
     {
         $userId = auth()->id();
-        $exists = DB::table('wishlists')->where('user_id', $userId)->where('produk_id', $id)->first();
+        $wishlist = Wishlist::where('user_id', $userId)->where('produk_id', $id)->first();
 
-        if ($exists) {
-            DB::table('wishlists')->where('user_id', $userId)->where('produk_id', $id)->delete();
+        if ($wishlist) {
+            $wishlist->delete();
             return redirect()->back()->with('success', 'Dihapus dari favorit.');
         } else {
-            DB::table('wishlists')->insert(['user_id' => $userId, 'produk_id' => $id, 'created_at' => now(), 'updated_at' => now()]);
+            Wishlist::create([
+                'user_id' => $userId, 
+                'produk_id' => $id
+            ]);
             return redirect()->back()->with('success', 'Ditambah ke favorit!');
         }
     }
